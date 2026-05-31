@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FX Trade Journal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f12;
+    --bg2: #16161c;
+    --bg3: #1e1e26;
+    --border: #2a2a35;
+    --border2: #3a3a48;
+    --text: #e8e8f0;
+    --text2: #9090a8;
+    --text3: #5a5a70;
+    --green: #3dd68c;
+    --green-bg: #0d2b1e;
+    --green-border: #1a4d33;
+    --red: #f05252;
+    --red-bg: #2b0d0d;
+    --red-border: #4d1a1a;
+    --amber: #f5a623;
+    --amber-bg: #2b1e08;
+    --amber-border: #4d3510;
+    --blue: #5b9cf6;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; }
+
+  /* Header */
+  .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem; }
+  .header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+  .header p { font-size: 13px; color: var(--text2); margin-top: 3px; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.875rem 1rem; }
+  .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .stat-value { font-family: var(--mono); font-size: 22px; font-weight: 500; }
+  .stat-value.green { color: var(--green); }
+  .stat-value.red { color: var(--red); }
+  .stat-value.amber { color: var(--amber); }
+
+  /* Buttons */
+  button {
+    font-family: var(--sans);
+    font-size: 13px;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  button:hover { background: var(--bg3); border-color: var(--border2); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.primary { background: var(--green-bg); color: var(--green); border-color: var(--green-border); }
+  button.primary:hover { background: #12372a; }
+  button.danger-btn { color: var(--red); border-color: transparent; }
+  button.danger-btn:hover { background: var(--red-bg); }
+  button.warn-btn { color: var(--amber); border-color: var(--amber-border); }
+  button.warn-btn:hover { background: var(--amber-bg); }
+  button.active-buy { background: var(--green-bg); color: var(--green); border-color: var(--green-border); }
+  button.active-sell { background: var(--red-bg); color: var(--red); border-color: var(--red-border); }
+  button.tab { border-color: transparent; color: var(--text2); }
+  button.tab.active { background: var(--bg3); color: var(--text); border-color: var(--border); }
+
+  /* Form */
+  .form-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .form-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; }
+  .form-row { display: grid; gap: 10px; margin-bottom: 10px; }
+  .form-row.cols-3 { grid-template-columns: 2fr 1fr 1fr; }
+  .form-row.cols-4 { grid-template-columns: 1fr 1fr 1fr 1.4fr; }
+  .form-group label { font-size: 12px; color: var(--text2); display: block; margin-bottom: 4px; }
+
+  input, select, textarea {
+    font-family: var(--sans);
+    font-size: 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    padding: 8px 10px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--border2); }
+  input[type=number] { font-family: var(--mono); }
+  select option { background: var(--bg2); }
+  textarea { resize: vertical; line-height: 1.5; }
+
+  .dir-group { display: flex; gap: 6px; }
+  .dir-group button { flex: 1; justify-content: center; font-weight: 500; }
+
+  .rr-hint { font-size: 13px; color: var(--text2); margin-bottom: 10px; }
+  .rr-hint span { font-family: var(--mono); font-weight: 500; color: var(--text); }
+
+  .form-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; align-items: center; }
+
+  /* ── Confluence Grader ── */
+  .confluence-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    margin-bottom: 10px;
+    user-select: none;
+    transition: border-color 0.15s;
+  }
+  .confluence-toggle:hover { border-color: var(--border2); }
+  .confluence-toggle-left { display: flex; align-items: center; gap: 10px; }
+  .confluence-toggle-label { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; }
+  .confluence-toggle-arrow { font-size: 11px; color: var(--text3); transition: transform 0.2s; }
+  .confluence-toggle.open .confluence-toggle-arrow { transform: rotate(180deg); }
+
+  /* Live grade pill inside toggle */
+  .grade-pill {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 3px;
+    border: 1px solid var(--border2);
+    color: var(--text3);
+    background: var(--bg);
+    transition: all 0.25s;
+  }
+  .grade-pill.gA, .grade-pill.gB { background: var(--green-bg); color: var(--green); border-color: var(--green-border); }
+  .grade-pill.gC { background: var(--amber-bg); color: var(--amber); border-color: var(--amber-border); }
+  .grade-pill.gD, .grade-pill.gF { background: var(--red-bg); color: var(--red); border-color: var(--red-border); }
+
+  .confluence-body {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    margin-bottom: 12px;
+    display: none;
+  }
+  .confluence-body.open { display: block; }
+
+  /* Confluence sections */
+  .cf-section { margin-bottom: 14px; }
+  .cf-section:last-child { margin-bottom: 0; }
+  .cf-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .cf-section-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+  .cf-section-pts { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+
+  /* Trend toggle buttons */
+  .cf-toggle-group { display: flex; gap: 6px; }
+  .cf-btn {
+    flex: 1;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 10px;
+    letter-spacing: 0.04em;
+    border-color: var(--border);
+    color: var(--text3);
+  }
+  .cf-btn:hover { color: var(--text); border-color: var(--border2); }
+  .cf-btn.cf-bull { background: var(--green-bg); color: var(--green); border-color: var(--green-border); }
+  .cf-btn.cf-bear { background: var(--red-bg); color: var(--red); border-color: var(--red-border); }
+  .cf-btn.cf-yes  { background: var(--green-bg); color: var(--green); border-color: var(--green-border); }
+  .cf-btn.cf-no   { background: var(--red-bg); color: var(--red); border-color: var(--red-border); }
+
+  /* Conflict warning */
+  .cf-conflict {
+    font-size: 11px;
+    color: var(--amber);
+    background: var(--amber-bg);
+    border: 1px solid var(--amber-border);
+    border-radius: 4px;
+    padding: 5px 10px;
+    margin-top: 6px;
+    display: none;
+  }
+  .cf-conflict.visible { display: block; }
+
+  /* Checkboxes */
+  .cf-checks { display: flex; flex-direction: column; gap: 6px; }
+  .cf-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    user-select: none;
+  }
+  .cf-check:hover { background: var(--bg3); border-color: var(--border2); }
+  .cf-check.checked { background: rgba(91,156,246,0.07); border-color: rgba(91,156,246,0.35); }
+  .cf-checkmark {
+    width: 15px; height: 15px;
+    border: 1px solid var(--border2);
+    border-radius: 3px;
+    flex-shrink: 0;
+    position: relative;
+    transition: all 0.15s;
+  }
+  .cf-check.checked .cf-checkmark {
+    background: var(--blue);
+    border-color: var(--blue);
+  }
+  .cf-check.checked .cf-checkmark::after {
+    content: '';
+    position: absolute;
+    left: 3px; top: 1px;
+    width: 5px; height: 8px;
+    border: 2px solid #0f0f12;
+    border-left: none; border-top: none;
+    transform: rotate(45deg);
+  }
+  .cf-check-label { font-size: 13px; color: var(--text2); flex: 1; }
+  .cf-check.checked .cf-check-label { color: var(--text); }
+  .cf-check-pts { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+  .cf-check.checked .cf-check-pts { color: var(--blue); }
+
+  /* Divider inside confluence */
+  .cf-divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+  /* Grade bar */
+  .cf-grade-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    margin-top: 14px;
+  }
+  .cf-grade-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+  .cf-bar-track { flex: 1; height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+  .cf-bar-fill { height: 100%; border-radius: 3px; width: 0%; transition: width 0.4s ease, background 0.3s; background: var(--text3); }
+  .cf-score-text { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--text2); white-space: nowrap; transition: color 0.3s; min-width: 80px; text-align: right; }
+
+  /* ── Filters ── */
+  .filters { display: flex; gap: 4px; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+  .filter-badge { font-size: 11px; background: var(--amber-bg); color: var(--amber); padding: 1px 6px; border-radius: 3px; margin-left: 5px; }
+
+  /* Trade cards */
+  .trade-list { display: flex; flex-direction: column; gap: 6px; }
+
+  .trade-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.875rem 1rem;
+    transition: border-color 0.15s;
+  }
+  .trade-card.win { border-color: var(--green-border); border-left-width: 3px; }
+  .trade-card.loss { border-color: var(--red-border); border-left-width: 3px; }
+
+  .trade-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+  .pair { font-family: var(--mono); font-weight: 500; font-size: 15px; min-width: 74px; }
+  .badge { font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 4px; letter-spacing: 0.04em; white-space: nowrap; }
+  .badge-buy { background: var(--green-bg); color: var(--green); }
+  .badge-sell { background: var(--red-bg); color: var(--red); }
+  .badge-open { background: var(--amber-bg); color: var(--amber); }
+  .badge-win { background: var(--green-bg); color: var(--green); }
+  .badge-loss { background: var(--red-bg); color: var(--red); }
+
+  /* Grade badge on card */
+  .badge-grade-A, .badge-grade-B { background: rgba(61,214,140,0.1); color: var(--green); border: 1px solid var(--green-border); font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; font-family: var(--mono); }
+  .badge-grade-C { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-border); font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; font-family: var(--mono); }
+  .badge-grade-D, .badge-grade-F { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 4px; font-family: var(--mono); }
+
+  .prices { font-family: var(--mono); font-size: 13px; color: var(--text2); }
+  .prices .ep { color: var(--text); }
+  .prices .sl { color: var(--red); }
+  .prices .tp { color: var(--green); }
+
+  .lots-rr { font-size: 12px; color: var(--text3); }
+
+  .trade-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+  .pnl { font-family: var(--mono); font-weight: 500; font-size: 14px; }
+  .pnl.pos { color: var(--green); }
+  .pnl.neg { color: var(--red); }
+  .trade-date { font-size: 12px; color: var(--text3); white-space: nowrap; }
+
+  .close-row {
+    display: flex; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid var(--border); flex-wrap: wrap;
+  }
+  .close-row input { width: 180px; }
+  .preview-pips { font-family: var(--mono); font-size: 13px; }
+
+  .expanded {
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .trade-note { font-size: 13px; color: var(--text2); line-height: 1.65; font-style: italic; }
+  .close-info { font-family: var(--mono); font-size: 12px; color: var(--text3); margin-top: 6px; }
+
+  /* Confluence summary in expanded view */
+  .cf-summary {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+  .cf-summary-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .cf-summary-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cf-tag {
+    font-size: 11px; font-family: var(--mono);
+    padding: 2px 7px; border-radius: 3px;
+    background: var(--bg2); border: 1px solid var(--border2); color: var(--text3);
+  }
+  .cf-tag.on { background: rgba(91,156,246,0.1); border-color: rgba(91,156,246,0.3); color: var(--blue); }
+  .cf-tag.bull-on { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+  .cf-tag.bear-on { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
+  .cf-summary-score { font-family: var(--mono); font-size: 12px; color: var(--text2); margin-top: 8px; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 4rem 0; }
+  .empty-icon { font-size: 36px; margin-bottom: 10px; }
+  .empty p { font-size: 14px; color: var(--text3); }
+
+  @media (max-width: 600px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .form-row.cols-3, .form-row.cols-4 { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div>
+      <h1>FX Trade Journal</h1>
+      <p id="subtitle">Swing trading log · 0 trades</p>
+    </div>
+    <button id="toggleFormBtn" onclick="toggleForm()">＋ New trade</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card"><div class="stat-label">Trades</div><div class="stat-value" id="stat-total">0</div></div>
+    <div class="stat-card"><div class="stat-label">Open</div><div class="stat-value" id="stat-open">0</div></div>
+    <div class="stat-card"><div class="stat-label">Win rate</div><div class="stat-value" id="stat-wr">—</div></div>
+    <div class="stat-card"><div class="stat-label">Total pips</div><div class="stat-value" id="stat-pips">—</div></div>
+  </div>
+
+  <div class="form-panel" id="formPanel" style="display:none">
+    <div class="form-title">Log new trade</div>
+    <div class="form-row cols-3">
+      <div class="form-group">
+        <label>Currency pair</label>
+        <select id="f-pair" onchange="updateRR()">
+          <option>EUR/USD</option><option>GBP/USD</option><option>USD/JPY</option>
+          <option>USD/CHF</option><option>AUD/USD</option><option>USD/CAD</option>
+          <option>NZD/USD</option><option>EUR/GBP</option><option>EUR/JPY</option>
+          <option>GBP/JPY</option><option>EUR/AUD</option><option>GBP/AUD</option>
+          <option>AUD/JPY</option><option>EUR/CAD</option><option>GBP/CAD</option>
+          <option>EUR/NZD</option><option>GBP/NZD</option><option>USD/ZAR</option>
+          <option>USD/NOK</option><option>USD/SEK</option><option>XAU/USD</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Direction</label>
+        <div class="dir-group">
+          <button class="active-buy" id="btn-buy" onclick="setDir('BUY')">BUY</button>
+          <button id="btn-sell" onclick="setDir('SELL')">SELL</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Lot size</label>
+        <input type="number" id="f-lots" value="0.10" min="0.01" step="0.01">
+      </div>
+    </div>
+
+    <div class="form-row cols-4">
+      <div class="form-group">
+        <label>Entry price *</label>
+        <input type="number" id="f-entry" step="0.00001" placeholder="1.08500" oninput="updateRR()">
+      </div>
+      <div class="form-group">
+        <label>Stop loss</label>
+        <input type="number" id="f-sl" step="0.00001" placeholder="1.08000" oninput="updateRR()">
+      </div>
+      <div class="form-group">
+        <label>Take profit</label>
+        <input type="number" id="f-tp" step="0.00001" placeholder="1.09500" oninput="updateRR()">
+      </div>
+      <div class="form-group">
+        <label>Date & time *</label>
+        <input type="datetime-local" id="f-date">
+      </div>
+    </div>
+
+    <div class="rr-hint" id="rr-hint" style="display:none">
+      Risk / Reward: <span id="rr-val"></span>
+    </div>
+
+    <!-- ── CONFLUENCE GRADER ── -->
+    <div class="confluence-toggle" id="cfToggle" onclick="toggleConfluence()">
+      <div class="confluence-toggle-left">
+        <span class="confluence-toggle-label">Confluence Grader</span>
+        <span class="grade-pill" id="cfPill">Not graded</span>
+      </div>
+      <span class="confluence-toggle-arrow" id="cfArrow">▼</span>
+    </div>
+
+    <div class="confluence-body" id="cfBody">
+
+      <!-- Trend -->
+      <div class="cf-section">
+        <div class="cf-section-head">
+          <span class="cf-section-title">Trend Alignment</span>
+          <span class="cf-section-pts">Weekly +20% · Daily +20%</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:5px">Weekly</div>
+            <div class="cf-toggle-group">
+              <button class="cf-btn" id="cf-w-bull" onclick="cfTrend('weekly','bull')">▲ Bull</button>
+              <button class="cf-btn" id="cf-w-bear" onclick="cfTrend('weekly','bear')">▼ Bear</button>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:5px">Daily</div>
+            <div class="cf-toggle-group">
+              <button class="cf-btn" id="cf-d-bull" onclick="cfTrend('daily','bull')">▲ Bull</button>
+              <button class="cf-btn" id="cf-d-bear" onclick="cfTrend('daily','bear')">▼ Bear</button>
+            </div>
+          </div>
+        </div>
+        <div class="cf-conflict" id="cfConflict">⚠ Weekly and daily trends conflict — −15% penalty applied</div>
+      </div>
+
+      <hr class="cf-divider">
+
+      <!-- Areas of Interest -->
+      <div class="cf-section">
+        <div class="cf-section-head">
+          <span class="cf-section-title">Area of Interest</span>
+          <span class="cf-section-pts">Daily +15% · 4H +15%</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:5px">Daily AOI</div>
+            <div class="cf-toggle-group">
+              <button class="cf-btn" id="cf-daoi-yes" onclick="cfYesNo('dailyAOI','yes')">✓ Yes</button>
+              <button class="cf-btn" id="cf-daoi-no"  onclick="cfYesNo('dailyAOI','no')">✕ No</button>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:5px">4-Hour AOI</div>
+            <div class="cf-toggle-group">
+              <button class="cf-btn" id="cf-4aoi-yes" onclick="cfYesNo('fourHAOI','yes')">✓ Yes</button>
+              <button class="cf-btn" id="cf-4aoi-no"  onclick="cfYesNo('fourHAOI','no')">✕ No</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="cf-divider">
+
+      <!-- Entry signals -->
+      <div class="cf-section">
+        <div class="cf-section-head">
+          <span class="cf-section-title">Entry Signals</span>
+          <span class="cf-section-pts">Select all present</span>
+        </div>
+        <div class="cf-checks">
+          <div class="cf-check" id="cf-engulf" onclick="cfCheck('engulf')">
+            <div class="cf-checkmark"></div>
+            <span class="cf-check-label">Engulfing Candle</span>
+            <span class="cf-check-pts">+15%</span>
+          </div>
+          <div class="cf-check" id="cf-hs" onclick="cfCheck('hs')">
+            <div class="cf-checkmark"></div>
+            <span class="cf-check-label">Head &amp; Shoulders Pattern</span>
+            <span class="cf-check-pts">+10%</span>
+          </div>
+          <div class="cf-check" id="cf-psych" onclick="cfCheck('psych')">
+            <div class="cf-checkmark"></div>
+            <span class="cf-check-label">Round Psychological Level</span>
+            <span class="cf-check-pts">+5%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grade bar -->
+      <div class="cf-grade-row">
+        <span class="cf-grade-label">Score</span>
+        <div class="cf-bar-track"><div class="cf-bar-fill" id="cfBarFill"></div></div>
+        <span class="cf-score-text" id="cfScoreText">0% — Not graded</span>
+      </div>
+    </div>
+    <!-- ── END CONFLUENCE GRADER ── -->
+
+    <div class="form-group" style="margin-bottom:12px">
+      <label>Trade rationale</label>
+      <textarea id="f-note" rows="3" placeholder="Describe your setup — market structure, confluence, key levels, entry trigger…"></textarea>
+    </div>
+
+    <div class="form-footer">
+      <button class="primary" onclick="addTrade()">✓ Log trade</button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button class="tab active" id="tab-all" onclick="setFilter('all')">All</button>
+    <button class="tab" id="tab-open" onclick="setFilter('open')">Open <span class="filter-badge" id="open-badge" style="display:none">0</span></button>
+    <button class="tab" id="tab-closed" onclick="setFilter('closed')">Closed</button>
+  </div>
+
+  <div id="trade-list"></div>
+</div>
+
+<script>
+let trades = JSON.parse(localStorage.getItem('fxj_trades') || '[]');
+let currentFilter = 'all';
+let currentDir = 'BUY';
+let expandedId = null;
+let closingId = null;
+
+// ── Confluence state ──
+const cfState = {
+  weekly: null, daily: null,
+  dailyAOI: null, fourHAOI: null,
+  engulf: false, hs: false, psych: false
+};
+const cfWeights = { weekly:20, daily:20, dailyAOI:15, fourHAOI:15, engulf:15, hs:10, psych:5 };
+
+function cfTrend(tf, dir) {
+  cfState[tf] = cfState[tf] === dir ? null : dir;
+  // Update button states
+  if (tf === 'weekly') {
+    document.getElementById('cf-w-bull').className = 'cf-btn' + (cfState.weekly === 'bull' ? ' cf-bull' : '');
+    document.getElementById('cf-w-bear').className = 'cf-btn' + (cfState.weekly === 'bear' ? ' cf-bear' : '');
+  } else {
+    document.getElementById('cf-d-bull').className = 'cf-btn' + (cfState.daily === 'bull' ? ' cf-bull' : '');
+    document.getElementById('cf-d-bear').className = 'cf-btn' + (cfState.daily === 'bear' ? ' cf-bear' : '');
+  }
+  const conflict = cfState.weekly && cfState.daily && cfState.weekly !== cfState.daily;
+  document.getElementById('cfConflict').className = 'cf-conflict' + (conflict ? ' visible' : '');
+  cfUpdateScore();
+}
+
+function cfYesNo(key, val) {
+  cfState[key] = cfState[key] === val ? null : val;
+  const yesId = key === 'dailyAOI' ? 'cf-daoi-yes' : 'cf-4aoi-yes';
+  const noId  = key === 'dailyAOI' ? 'cf-daoi-no'  : 'cf-4aoi-no';
+  document.getElementById(yesId).className = 'cf-btn' + (cfState[key] === 'yes' ? ' cf-yes' : '');
+  document.getElementById(noId).className  = 'cf-btn' + (cfState[key] === 'no'  ? ' cf-no'  : '');
+  cfUpdateScore();
+}
+
+function cfCheck(key) {
+  cfState[key] = !cfState[key];
+  document.getElementById('cf-' + key).classList.toggle('checked', cfState[key]);
+  cfUpdateScore();
+}
+
+function cfCalcScore() {
+  let score = 0;
+  const earned = [];
+  if (cfState.weekly)   { score += cfWeights.weekly;   earned.push('weekly'); }
+  if (cfState.daily)    { score += cfWeights.daily;    earned.push('daily'); }
+  if (cfState.weekly && cfState.daily && cfState.weekly !== cfState.daily) score = Math.max(0, score - 15);
+  if (cfState.dailyAOI === 'yes') { score += cfWeights.dailyAOI; earned.push('dailyAOI'); }
+  if (cfState.fourHAOI === 'yes') { score += cfWeights.fourHAOI; earned.push('fourHAOI'); }
+  if (cfState.engulf) { score += cfWeights.engulf; earned.push('engulf'); }
+  if (cfState.hs)     { score += cfWeights.hs;     earned.push('hs'); }
+  if (cfState.psych)  { score += cfWeights.psych;  earned.push('psych'); }
+  return { score: Math.min(100, score), earned };
+}
+
+function cfGetGrade(score) {
+  if (score >= 85) return { letter:'A', verdict:'Prime Setup',    barColor:'var(--green)' };
+  if (score >= 70) return { letter:'B', verdict:'Strong Setup',   barColor:'var(--green)' };
+  if (score >= 55) return { letter:'C', verdict:'Moderate Setup', barColor:'var(--amber)' };
+  if (score >= 35) return { letter:'D', verdict:'Weak Setup',     barColor:'var(--red)' };
+  return                  { letter:'F', verdict:'Skip Trade',     barColor:'var(--red)' };
+}
+
+function cfUpdateScore() {
+  const hasAny = cfState.weekly || cfState.daily || cfState.dailyAOI || cfState.fourHAOI || cfState.engulf || cfState.hs || cfState.psych;
+  const { score } = cfCalcScore();
+  const grade = cfGetGrade(score);
+
+  const pill = document.getElementById('cfPill');
+  const bar  = document.getElementById('cfBarFill');
+  const txt  = document.getElementById('cfScoreText');
+
+  if (!hasAny) {
+    pill.className = 'grade-pill';
+    pill.textContent = 'Not graded';
+    bar.style.width = '0%';
+    bar.style.background = 'var(--text3)';
+    txt.textContent = '0% — Not graded';
+    txt.style.color = 'var(--text3)';
+    return;
+  }
+
+  pill.className = 'grade-pill g' + grade.letter;
+  pill.textContent = grade.letter + ' · ' + score + '%';
+  bar.style.width = score + '%';
+  bar.style.background = grade.barColor;
+  txt.textContent = score + '% — ' + grade.verdict;
+  txt.style.color = grade.barColor;
+}
+
+function cfReset() {
+  Object.assign(cfState, { weekly:null, daily:null, dailyAOI:null, fourHAOI:null, engulf:false, hs:false, psych:false });
+  ['cf-w-bull','cf-w-bear','cf-d-bull','cf-d-bear','cf-daoi-yes','cf-daoi-no','cf-4aoi-yes','cf-4aoi-no'].forEach(id => {
+    document.getElementById(id).className = 'cf-btn';
+  });
+  ['cf-engulf','cf-hs','cf-psych'].forEach(id => {
+    document.getElementById(id).classList.remove('checked');
+  });
+  document.getElementById('cfConflict').className = 'cf-conflict';
+  cfUpdateScore();
+}
+
+function toggleConfluence() {
+  const body = document.getElementById('cfBody');
+  const toggle = document.getElementById('cfToggle');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  toggle.classList.toggle('open', !isOpen);
+}
+
+// ── Core journal ──
+function save() {
+  localStorage.setItem('fxj_trades', JSON.stringify(trades));
+}
+
+function isJpy(pair) { return pair.includes('JPY'); }
+function decs(pair) { return isJpy(pair) ? 3 : pair.includes('XAU') ? 2 : 5; }
+function calcPips(pair, dir, entry, exit) {
+  const m = isJpy(pair) ? 100 : pair.includes('XAU') ? 10 : 10000;
+  return parseFloat(((dir === 'BUY' ? exit - entry : entry - exit) * m).toFixed(1));
+}
+function calcRR(entry, sl, tp) {
+  const risk = Math.abs(entry - sl), reward = Math.abs(tp - entry);
+  return risk > 0 ? parseFloat((reward / risk).toFixed(2)) : null;
+}
+function fmt(n, d) { return (n != null && n !== '') ? parseFloat(n).toFixed(d) : '—'; }
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'2-digit'})
+    + ' · ' + dt.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
+}
+
+function toggleForm() {
+  const panel = document.getElementById('formPanel');
+  const btn = document.getElementById('toggleFormBtn');
+  const showing = panel.style.display !== 'none';
+  if (showing) {
+    panel.style.display = 'none';
+    btn.textContent = '＋ New trade';
+  } else {
+    panel.style.display = 'block';
+    btn.textContent = '✕ Cancel';
+    const now = new Date();
+    document.getElementById('f-date').value =
+      new Date(now - now.getTimezoneOffset() * 60000).toISOString().slice(0,16);
+  }
+}
+
+function setDir(d) {
+  currentDir = d;
+  document.getElementById('btn-buy').className = d === 'BUY' ? 'active-buy' : '';
+  document.getElementById('btn-sell').className = d === 'SELL' ? 'active-sell' : '';
+  updateRR();
+}
+
+function updateRR() {
+  const entry = parseFloat(document.getElementById('f-entry').value);
+  const sl = parseFloat(document.getElementById('f-sl').value);
+  const tp = parseFloat(document.getElementById('f-tp').value);
+  const hint = document.getElementById('rr-hint');
+  if (entry && sl && tp) {
+    const rr = calcRR(entry, sl, tp);
+    if (rr) { hint.style.display = 'block'; document.getElementById('rr-val').textContent = '1 : ' + rr; }
+  } else { hint.style.display = 'none'; }
+}
+
+function addTrade() {
+  const entry = document.getElementById('f-entry').value;
+  const date = document.getElementById('f-date').value;
+  if (!entry || !date) { alert('Entry price and date are required.'); return; }
+  const sl = document.getElementById('f-sl').value;
+  const tp = document.getElementById('f-tp').value;
+
+  const { score, earned } = cfCalcScore();
+  const hasConfluence = cfState.weekly || cfState.daily || cfState.dailyAOI || cfState.fourHAOI || cfState.engulf || cfState.hs || cfState.psych;
+  const grade = hasConfluence ? cfGetGrade(score) : null;
+
+  const trade = {
+    id: Date.now().toString(),
+    pair: document.getElementById('f-pair').value,
+    dir: currentDir,
+    entry: parseFloat(entry),
+    sl: sl ? parseFloat(sl) : null,
+    tp: tp ? parseFloat(tp) : null,
+    lots: parseFloat(document.getElementById('f-lots').value) || 0.1,
+    date: date,
+    note: document.getElementById('f-note').value,
+    status: 'open', exit: null, closeDate: null, pnl: null,
+    // Confluence data
+    confluence: hasConfluence ? {
+      weekly: cfState.weekly, daily: cfState.daily,
+      dailyAOI: cfState.dailyAOI, fourHAOI: cfState.fourHAOI,
+      engulf: cfState.engulf, hs: cfState.hs, psych: cfState.psych,
+      score, grade: grade ? grade.letter : null, verdict: grade ? grade.verdict : null
+    } : null
+  };
+
+  trades.unshift(trade);
+  save();
+
+  // Reset
+  document.getElementById('f-entry').value = '';
+  document.getElementById('f-sl').value = '';
+  document.getElementById('f-tp').value = '';
+  document.getElementById('f-note').value = '';
+  document.getElementById('f-lots').value = '0.10';
+  document.getElementById('rr-hint').style.display = 'none';
+  setDir('BUY');
+  cfReset();
+  // Close confluence panel
+  document.getElementById('cfBody').classList.remove('open');
+  document.getElementById('cfToggle').classList.remove('open');
+  toggleForm();
+  render();
+}
+
+function closeTrade(id) {
+  const input = document.getElementById('close-input-' + id);
+  if (!input || !input.value) return;
+  const exitPrice = parseFloat(input.value);
+  trades = trades.map(t => {
+    if (t.id !== id) return t;
+    return { ...t, status: 'closed', exit: exitPrice, closeDate: new Date().toISOString(), pnl: calcPips(t.pair, t.dir, t.entry, exitPrice) };
+  });
+  save(); closingId = null; render();
+}
+
+function deleteTrade(id) {
+  if (!confirm('Delete this trade?')) return;
+  trades = trades.filter(t => t.id !== id);
+  save(); render();
+}
+
+function toggleExpand(id) { expandedId = expandedId === id ? null : id; render(); }
+function toggleClose(id)  { closingId  = closingId  === id ? null : id; render(); }
+
+function previewPips(id) {
+  const input = document.getElementById('close-input-' + id);
+  const preview = document.getElementById('preview-' + id);
+  if (!input || !preview) return;
+  const t = trades.find(x => x.id === id);
+  if (!t || !input.value) { preview.textContent = ''; return; }
+  const p = calcPips(t.pair, t.dir, t.entry, parseFloat(input.value));
+  preview.textContent = 'Preview: ' + (p >= 0 ? '+' : '') + p.toFixed(1) + ' pips';
+  preview.style.color = p >= 0 ? 'var(--green)' : 'var(--red)';
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  ['all','open','closed'].forEach(v => {
+    document.getElementById('tab-' + v).className = 'tab' + (v === f ? ' active' : '');
+  });
+  render();
+}
+
+function cfSummaryHTML(cf) {
+  if (!cf) return '';
+  const tags = [
+    cf.weekly   ? `<span class="cf-tag ${cf.weekly === 'bull' ? 'bull-on' : 'bear-on'}">W: ${cf.weekly === 'bull' ? '▲ Bull' : '▼ Bear'}</span>` : '',
+    cf.daily    ? `<span class="cf-tag ${cf.daily  === 'bull' ? 'bull-on' : 'bear-on'}">D: ${cf.daily  === 'bull' ? '▲ Bull' : '▼ Bear'}</span>` : '',
+    cf.dailyAOI === 'yes' ? `<span class="cf-tag on">Daily AOI ✓</span>` : '',
+    cf.fourHAOI === 'yes' ? `<span class="cf-tag on">4H AOI ✓</span>` : '',
+    cf.engulf ? `<span class="cf-tag on">Engulfing ✓</span>` : '',
+    cf.hs     ? `<span class="cf-tag on">H&amp;S ✓</span>` : '',
+    cf.psych  ? `<span class="cf-tag on">Psych Level ✓</span>` : '',
+  ].filter(Boolean).join('');
+
+  return `<div class="cf-summary">
+    <div class="cf-summary-title">Confluence Breakdown</div>
+    <div class="cf-summary-grid">${tags}</div>
+    <div class="cf-summary-score">Score: ${cf.score}% — ${cf.verdict}</div>
+  </div>`;
+}
+
+function render() {
+  const openT = trades.filter(t => t.status === 'open');
+  const closedT = trades.filter(t => t.status === 'closed');
+  const wins = closedT.filter(t => t.pnl > 0);
+  const totalPips = closedT.reduce((s, t) => s + (t.pnl || 0), 0);
+  const wr = closedT.length ? Math.round(wins.length / closedT.length * 100) : null;
+
+  document.getElementById('subtitle').textContent =
+    'Swing trading log · ' + trades.length + ' trade' + (trades.length !== 1 ? 's' : '');
+  document.getElementById('stat-total').textContent = trades.length;
+
+  const openEl = document.getElementById('stat-open');
+  openEl.textContent = openT.length;
+  openEl.className = 'stat-value' + (openT.length ? ' amber' : '');
+  document.getElementById('stat-wr').textContent = wr !== null ? wr + '%' : '—';
+
+  const pipsEl = document.getElementById('stat-pips');
+  if (closedT.length) {
+    pipsEl.textContent = (totalPips >= 0 ? '+' : '') + totalPips.toFixed(1);
+    pipsEl.className = 'stat-value ' + (totalPips > 0 ? 'green' : totalPips < 0 ? 'red' : '');
+  } else { pipsEl.textContent = '—'; pipsEl.className = 'stat-value'; }
+
+  const badge = document.getElementById('open-badge');
+  if (openT.length) { badge.style.display = ''; badge.textContent = openT.length; }
+  else badge.style.display = 'none';
+
+  const list = currentFilter === 'open' ? openT : currentFilter === 'closed' ? closedT : trades;
+  const container = document.getElementById('trade-list');
+
+  if (list.length === 0) {
+    container.innerHTML = `<div class="empty">
+      <div class="empty-icon">📒</div>
+      <p>${currentFilter === 'all' ? 'No trades yet. Click "New trade" to get started.' : 'No ' + currentFilter + ' trades.'}</p>
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(t => {
+    const isOpen = t.status === 'open';
+    const isWin = t.pnl > 0;
+    const d = decs(t.pair);
+    const rr2 = isOpen && t.sl && t.tp ? calcRR(t.entry, t.sl, t.tp) : null;
+    const isExp = expandedId === t.id;
+    const isClosing = closingId === t.id;
+    const cf = t.confluence;
+    const hasNote = t.note || t.status === 'closed' || cf;
+
+    return `<div class="trade-card ${!isOpen ? (isWin ? 'win' : 'loss') : ''}">
+      <div class="trade-row">
+        <span class="pair">${t.pair}</span>
+        <span class="badge badge-${t.dir.toLowerCase()}">${t.dir}</span>
+        <span class="badge ${isOpen ? 'badge-open' : (isWin ? 'badge-win' : 'badge-loss')}">${isOpen ? 'OPEN' : (isWin ? 'WIN' : 'LOSS')}</span>
+        ${cf && cf.grade ? `<span class="badge-grade-${cf.grade}" title="${cf.verdict}">${cf.grade} · ${cf.score}%</span>` : ''}
+        <span class="prices">
+          @ <span class="ep">${fmt(t.entry, d)}</span>
+          ${t.sl ? ` · SL <span class="sl">${fmt(t.sl, d)}</span>` : ''}
+          ${t.tp ? ` · TP <span class="tp">${fmt(t.tp, d)}</span>` : ''}
+        </span>
+        <span class="lots-rr">${t.lots} lot${t.lots !== 1 ? 's' : ''}${rr2 ? ' · R:R 1:' + rr2 : ''}</span>
+        <div class="trade-actions">
+          ${!isOpen && t.pnl !== null ? `<span class="pnl ${isWin ? 'pos' : 'neg'}">${isWin ? '+' : ''}${t.pnl.toFixed(1)} pips</span>` : ''}
+          <span class="trade-date">${fmtDate(t.date)}</span>
+          ${hasNote ? `<button onclick="toggleExpand('${t.id}')" title="Toggle details">${isExp ? '▲' : '📝'}</button>` : ''}
+          ${isOpen ? `<button class="warn-btn" onclick="toggleClose('${t.id}')">Close</button>` : ''}
+          <button class="danger-btn" onclick="deleteTrade('${t.id}')" title="Delete">🗑</button>
+        </div>
+      </div>
+
+      ${isClosing ? `<div class="close-row">
+        <input type="number" id="close-input-${t.id}" placeholder="Exit price" step="${isJpy(t.pair) ? '0.001' : '0.00001'}" oninput="previewPips('${t.id}')" style="width:180px;font-family:var(--mono)">
+        <button class="primary" onclick="closeTrade('${t.id}')">✓ Confirm close</button>
+        <button onclick="toggleClose('${t.id}')">Cancel</button>
+        <span class="preview-pips" id="preview-${t.id}"></span>
+      </div>` : ''}
+
+      ${isExp ? `<div class="expanded">
+        ${t.note ? `<p class="trade-note">"${t.note}"</p>` : ''}
+        ${cf ? cfSummaryHTML(cf) : ''}
+        ${t.status === 'closed' && t.exit != null ? `<p class="close-info">Closed @ ${fmt(t.exit, d)} · ${fmtDate(t.closeDate)}</p>` : ''}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+render();
+</script>
+</body>
+</html>
